@@ -6,6 +6,7 @@
 const http = require('http');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
+const isJSON = require('./utils/isJSON');
 
 // Create server to handle all requests
 const port = 3000;
@@ -37,8 +38,8 @@ const server = http.createServer((req, res) => {
   req.on('end', () => {
     buffer += decoder.end();
 
-    // Parse payload to JSON
-    buffer = JSON.parse(buffer)
+    // Parse payload to JSON, if any
+    isJSON(buffer) ? buffer = JSON.parse(buffer) : '';
 
   // Send response
   res.end('Hello World\n');
