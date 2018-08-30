@@ -38,15 +38,61 @@ const server = http.createServer((req, res) => {
   req.on('end', () => {
     buffer += decoder.end();
 
-    // Parse payload to JSON, if any
-    isJSON(buffer) ? buffer = JSON.parse(buffer) : '';
+    // choose handler for requests
+    const requestHandler = typeof(router[trimmedPath]) !== 'undefined' ?
+      router[trimmedPath] : handlers.notFound;
 
-  // Send response
-  res.end('Hello World\n');
+    // Create request data to be passed into handler
+    const data = {
+      method,
+      path: trimmedPath,
+      query: queryStringObject,
+      headers,
+      payload: buffer,
+    };
 
-  // Log request details
-  console.log('Request Payload:', buffer);
+    // route to choosen handler
+    requestHandler(data, (statusCode, payload) => {
+      // Use status code param or default to 200
+      statusCode = typeof(statusCode) === 'number' ? statusCode : 200;
+      
+      // Use payload param or default to {}
+      payload = typeof(payload) === 'object' ? payload : {};
+
+      // Convert callback payload to a string
+      const payloadString = JSON.stringify(payload);
+
+      // Return response to caller
+      res.writeHead(statusCode);
+      res.end(payloadString);
+
+      // Log response details
+      console.log('Response:', statusCode, payloadString);
+    });
   });
 });
 
 server.listen(port, () => console.log(`Server listening on port ${port}`));
+
+// Define request handlers
+const handlers = {};
+
+// Test handler
+handlers.test = (data, callback) => {
+  // Parse payload to JSON, if any
+  // isJSON(data) ? buffer = JSON.parse(data) : '';
+
+  callback(406, {
+    name: 'Test handler',
+  });
+};
+
+// Not found handler
+handlers.notFound = (data, callback) => {
+  callback(404);
+};
+
+// Define request router
+const router = {
+  'test': handlers.test,
+};
