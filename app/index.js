@@ -27,9 +27,25 @@ const server = http.createServer((req, res) => {
   // Get request headers
   const headers = req.headers;
 
+  // Get payload
+  const decoder = new StringDecoder('utf-8');
+  let buffer = '';
+
+  req.on('data', (data) => {
+    buffer += decoder.write(data);
+  });
+  req.on('end', () => {
+    buffer += decoder.end();
+
+    // Parse payload to JSON
+    buffer = JSON.parse(buffer)
+
   // Send response
   res.end('Hello World\n');
 
+  // Log request details
+  console.log('Request Payload:', buffer);
+  });
 });
 
 server.listen(port, () => console.log(`Server listening on port ${port}`));
